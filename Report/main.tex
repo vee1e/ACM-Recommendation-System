@@ -17,7 +17,7 @@
 
 \lstset{basicstyle=\ttfamily}
 
-\title{Applied Recommender Systems}
+\title{Applied Recommender Systems — A Report}
 \author{Lakshit Verma}
 
 \begin{document}
@@ -42,6 +42,8 @@ To build a recommendation system, the most crucial element is user feedback. Thi
 
 \end{itemize}
 
+\subsection{Types of recommendation engines}
+
 There are several methods of creating a recommendation engine. The ones given in the text are as follows:
 
 \begin{enumerate}
@@ -54,7 +56,7 @@ There are several methods of creating a recommendation engine. The ones given in
 	\item{\textbf{Deep learning and NLP}}
 \end{enumerate}
 
-\subsection{Market basket analysis}
+\subsubsection{Market basket analysis}
 
 This is method most often used by retailers to predict the popularity of a given item. It works through identifying pairs of items that are often put together.
 
@@ -66,7 +68,7 @@ This is method most often used by retailers to predict the popularity of a given
 
 \noindent \textbf{Support} is the relative frequency of an association rule displaying. \textbf{Confidence} measures the reliability of the rule, where a confidence of 0.5 indicates the items in question were purchased together 50\% of the time. Finally, \textbf{Lift} is a measure of the ratio of the expected support vs. the support if two rules are independent. A lift value close to one means the rules are independent, and lift values over 1 indicate more and more correlation between the two rules.
 
-\subsection{Content-Based Filtering}
+\subsubsection{Content-Based Filtering}
 
 \noindent Content-based filtering method is a recommendation algorithm that suggests items similar to the ones other users have previously selected or shown interest in.
 
@@ -93,7 +95,7 @@ $$ sim(A, B) = \cos{\theta} = \frac{A \cdot B}{\|A\| \|B\|} $$
 
 \noindent The critical flaw of such a system is the fact that all suggestions emerging from this end up falling into the same sort of product ``category'', making it feel formless and repetitive.
 
-\subsection{Collaborative-Based Filtering}
+\subsubsection{Collaborative-Based Filtering}
 
 In this, a user-user similarity is considered along with item similarities, to address the issues with simple Content-Based filtering.
 
@@ -105,6 +107,133 @@ In this, a user-user similarity is considered along with item similarities, to a
     \item{\textbf{User-user collaborative filtering:} Here, you find user-user correlations and offer recommendations based on what similar users chose before. Despite its effectiveness, it is highly compute-intensive and its use in large-scale databases is therefore discouraged.}
     \item{\textbf{Item-item collaborative filtering:} This involves finding similarities in item-item pairs instead of user-user pairs. This is far less computationally demanding, at the cost of less accurate results.}
 \end{itemize}
+
+\subsubsection{Hybrid Systems}
+
+A hybrid system offers the best of both worlds— combining both content-based and collaborative-based systems, drawing power from another when one fails to produce desirable results. They can be implemented in the following ways:
+
+\begin{itemize}
+    \item{Generating recommendations separately by using content- and collaborative-based systems and merging them subsequently.}
+    \item{Adding features of the collaborative method to a collaborative-based recommender engine.}
+    \item{Adding features of the content method to a collaborative-based recommender engine.}
+\end{itemize}
+
+\noindent Studies consistently show that hybrid recommender engines generally perform better, faster and provide more reliable recommendations.
+
+\subsubsection{ML clustering}
+
+Applying the novel field of Machine Learning to the recommendation systems seems like the logical next step. ML methods are of two types: supervised and unsupervised. Clustering is the unsupervised method, meaning it finds patterns in data sans any human intervention in labelling the data. It is the process of grouping objects into clusters, and generally an object belonging to a cluster is more similar to the objects inside the cluser than the objects outside of it.
+
+\medskip
+
+\noindent Clustering based methods are usually implemented when there is little user data to go by. If a user is found to be similiar to a cluster of users, the user is added to that cluster. Users inside the cluster all share specific tastes, and recommendations are provided according to that.
+
+\medskip
+
+\noindent Some popularly used clustering algorithms are:
+
+\begin{itemize}
+	\item{\textbf{K-means clustering}}
+	\item{\textbf{Fuzzy mapping}}
+	\item{\textbf{Self-organizing maps (SOM)}}
+	\item{\textbf{Hybrids of two or more techniques}}
+\end{itemize}
+
+\subsubsection{ML classification}
+
+In a classification based system, the algorithm uses features of both the items and users to predict a user's affinity towards a given product. One application of this is the buyer propensity model.
+
+\medskip
+
+\noindent Some flaws of classification-based systems are:
+
+\begin{itemize}
+    \item{Collection of data is tedious.}
+    \item{Its classification is challenging, and again, time-consuming.}
+    \item{Training the models to function in real time is difficult.}
+\end{itemize}
+
+\subsubsection{Deep Learning}
+
+Deep Learning and Deep Neural Networks (DNNs) are a more powerful form of Machine Learning. They work especially well on unstructured data such as text, images, and video.
+
+\noindent A few DL-based systems are:
+
+\begin{itemize}
+    \item{\textbf{Restricted Boltzmann}}
+    \item{\textbf{Autoencoder based}}
+    \item{\textbf{Neural Attention based}}
+\end{itemize}
+
+\subsection{Applications}
+
+Here, we look at real examples of recommendation systems being constructing using Python and sci-py.
+
+\subsubsection{Popularity}
+
+This is the simplest form of recommendation— to sort products based on a measure of popularity (views, downloads, likes, etc.)
+
+\medskip
+
+\noindent We import the required libraries and data first.
+
+\begin{lstlisting}
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('data.csv',encoding= 'unicode_escape')
+\end{lstlisting}
+
+\noindent Cleaning up the data by dropping NULLs and values with no description, we finally sort the most popular items.
+
+\begin{lstlisting}
+global_popularity=df_new.pivot_table(index=["StockCode","Description"],
+values="Quantity", aggfunc="sum").sort_values(by="Quantity", ascending=False)
+print("10 most popular items globally....")
+global_popularity.head(10)
+\end{lstlisting}
+
+\noindent To calculate the most popular items by country, we use the following code:
+
+\begin{lstlisting}
+# Popular items by country
+countrywise=df_new.pivot_table(index=["Country","StockCode","Description"],
+values="Quantity", aggfunc="sum").reset_index()
+
+# Vizualize top 10 most popular items in UK
+sns.barplot(y="Description", x="Quantity",
+    data=countrywise[countrywise["Country"] == "United Kingdom"]
+        .sort_values(by="Quantity", ascending=False).head(10))
+plt.title("Top 10 Most Popular Items in UK", fontsize=14)
+plt.ylabel("Item")
+\end{lstlisting}
+
+\subsubsection{Buy Again}
+
+This is another simple system that sorts items by number of repeated instances, and recommends the ones at the top.
+
+\begin{lstlisting}
+from collections import Counter
+
+def buy_again(customerid):
+# Fetching the items bought by the customer for provided customer id
+items_bought = df_new[df_new["CustomerID"] == customerid].Description
+
+# Count and sort the repeated purchases
+bought_again = Counter(items_bought)
+
+# Convert counter to list for printing recommendations
+buy_again_list = list(bought_again)
+
+# Printing the recommendations
+print("Items you would like to buy again :")
+
+return(buy_again_list)
+\end{lstlisting}
+
+\noindent Using the function on a specific user, say 1252 (function call \texttt{buy\_again(1252)}), we will recieve a list of the most likely items the user is to buy, based on their previous purchase history.
 
 \section{Content-Based Recommender Systems}
 \section{Collaborative Filtering}
