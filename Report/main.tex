@@ -99,7 +99,12 @@ In this, a user-user similarity is considered along with item similarities, to a
 
 \medskip
 
-\noindent The process of finding similarities is much the same as that of Content-Based filtering, but the engine then recommends titles
+\noindent The process of finding similarities is much the same as that of Content-Based filtering, but the engine then recommends titles that the user has not watched but other users with the same interests have. There are two kinds of Collaborative-Based filtering algorithms.
+
+\begin{itemize}
+    \item{\textbf{User-user collaborative filtering:} Here, you find user-user correlations and offer recommendations based on what similar users chose before. Despite its effectiveness, it is highly compute-intensive and its use in large-scale databases is therefore discouraged.}
+    \item{\textbf{Item-item collaborative filtering:} This involves finding similarities in item-item pairs instead of user-user pairs. This is far less computationally demanding, at the cost of less accurate results.}
+\end{itemize}
 
 \section{Content-Based Recommender Systems}
 \section{Collaborative Filtering}
