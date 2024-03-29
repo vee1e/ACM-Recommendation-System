@@ -1,0 +1,100 @@
+\documentclass{article}
+
+% DO CHAPTERS 1 3 4 AND 5
+
+\usepackage[margin=0.75in]{geometry}
+
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fontspec}
+
+\setmonofont{Consolas}
+
+\hypersetup{
+    colorlinks,
+    linkcolor=blue,
+}
+
+\lstset{basicstyle=\ttfamily}
+
+\title{Applied Recommender Systems}
+\author{Lakshit Verma}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+This report is a short summary of the book \textbf{Applied Recommender Systems with Python}. It covers chapters 1, 3, 4 and 5 of the text respectively. In the initial chapter, we get a brief introduction to the world of recommendation systems and their types. In the subsequent chapters, we get a deeper dive into three methods of recommendation— Content-Based, Collaborative Filtering, and the methods used to achieve and improve on Collaborative Filtering.
+
+\section{Introduction to Recommendation Systems}
+
+recommendation systems are typically built for one purpose— to maximize revenue by enhancing the user's experience and maximize their time spent on the site.
+To build a recommendation system, the most crucial element is user feedback. This comes in two forms, \textbf{explicit} and \textbf{implicit}.
+
+\begin{itemize}
+
+    \item{\textbf{Explicit Feedback:} It is feedback the user knowingly and explicitly puts on a product. Examples of this include likes, dislikes, star ratings, and reviews.}
+    \item{\textbf{Implicit Feedback:} This is the feedback that is generated unconsciously, through the revealed preferences of the user. These can include links clicked on, pages visited, video watch time, etc.}
+
+\end{itemize}
+
+There are several methods of creating a recommendation engine. The ones given in the text are as follows:
+
+\begin{enumerate}
+	\item{\textbf{Market basket analysis (association rule mining)}}
+	\item{\textbf{Content-based filtering}}
+	\item{\textbf{Collaborative-based filtering}}
+	\item{\textbf{Hybrid systems}}
+	\item{\textbf{ML clustering}}
+	\item{\textbf{ML classification}}
+	\item{\textbf{Deep learning and NLP}}
+\end{enumerate}
+
+\subsection{Market basket analysis}
+
+This is method most often used by retailers to predict the popularity of a given item. It works through identifying pairs of items that are often put together.
+
+\medskip
+
+\noindent A few important terms are used in context of this system, and one of them is \textbf{Association rule}. Their purpose is to identify and symbolize strong relationships between items. They are written in the form \texttt{\{antecedent -> consequent\}}. For example, take \texttt{\{bread -> jam\}}, which means in plain English \textbf{``There is a strong relationship between customers who bought bread and jam in the same purchase''}.
+
+\medskip
+
+\noindent \textbf{Support} is the relative frequency of an association rule displaying. \textbf{Confidence} measures the reliability of the rule, where a confidence of 0.5 indicates the items in question were purchased together 50\% of the time. Finally, \textbf{Lift} is a measure of the ratio of the expected support vs. the support if two rules are independent. A lift value close to one means the rules are independent, and lift values over 1 indicate more and more correlation between the two rules.
+
+\subsection{Content-Based Filtering}
+
+\noindent Content-based filtering method is a recommendation algorithm that suggests items similar to the ones other users have previously selected or shown interest in.
+
+\medskip
+
+\noindent Take the example of Netflix. The popular streaming site saves all user viewing information in a vector-based format, known as the \textbf{profile vector}, which contains information on past viewings, liked and disliked shows, most frequently watched genres, etc. Then there is another vector that stores all the information regarding the titles (movies and shows) available on the platform, known as the \textbf{item vector}. It stores information like the title, actors, genre, language, length, crew info, synopsis, and so forth.
+
+\medskip
+
+\noindent The content-based filtering algorithm uses the concept of cosine similarity. In it, you find the cosine of the angle between two vectors — the profile and item vectors in this case. Suppose \( A \) is the profile vector and \( B \) is the item vector, then the (cosine) similarity between them is calculated as follows:
+
+$$ sim(A, B) = \cos{\theta} = \frac{A \cdot B}{\|A\| \|B\|} $$
+
+\noindent This outcome always ranges between -1 and 1, and is calculated for multiple item vectors, keeping the profile vector constant. They are then ranked in descending order of similarity, and have one of two following approaches applied for recommendations:
+
+\begin{itemize}
+    \item{\textbf{Top-N approach:} The top N movies are recommended, where N limits the number of titles recommended.}
+    \item{\textbf{Rating scale approach} A limit on the similarity value is set, and all the titles satisfying that threshold are recommended.}
+\end{itemize}
+
+\noindent Other methods such as \textbf{Euclidean Distance} ($ \sqrt{(x_1 - y_1) ^ 2 + \cdots + (x_N - y_N) ^ 2} $) and \textbf{Pearson’s correlation} are also utilized in select cases.
+
+\medskip
+
+\noindent The critical flaw of such a system is the fact that all suggestions emerging from this end up falling into the same sort of product ``category'', making it feel formless and repetitive.
+
+\section{Content-Based Recommender Systems}
+\section{Collaborative Filtering}
+\section{Collaborative Filtering using Matrix Factorizing, Singular Value Decomposition, and Co-Clustering}
+
+\end{document}
