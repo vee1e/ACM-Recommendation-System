@@ -6,6 +6,9 @@
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{fontspec}
+\usepackage{graphicx}
+
+\graphicspath{ {./images/} }
 
 \setmonofont{Consolas}
 
@@ -357,9 +360,66 @@ After converting text to features, we then employ a number of techniques to find
     \item{\textbf{Manhattan Distance:} It's the sum of the absolute differences between two vectors.}
 \end{itemize}
 
-\subsection{A Few Implementations}
+\subsection{Implementation}
 
-\subsubsection{}
+We use CountVectorizer here as an example conversion model.
+
+\begin{lstlisting}
+# Comparing similarity to get the top matches using count Vec
+def get_recommendation_cv(product_id, df, similarity, n=10):
+    row = df.loc[df['Product Name'] == product_id]
+    index = list(row.index)[0]
+    description = row['desc_lowered'].loc[index]
+    #Create vector using Count Vectorizer
+    count_vector = cnt_vec.fit_transform(desc_list)
+    if similarity == "cosine":
+        sim_matrix = cosine_similarity(count_vector)
+        products = find_similarity(sim_matrix , index)
+    elif similarity == "manhattan":
+        sim_matrix = manhattan_distances(count_vector)
+        products = find_manhattan_distance(sim_matrix , index)
+    else:
+        sim_matrix = euclidean_distances(count_vector)
+        products = find_euclidean_distances(sim_matrix , index)
+    return products
+\end{lstlisting}
+
+The input for this is as follows
+
+\begin{itemize}
+    \item{\textbf{product\_id:} The product name for which we are finding similar reccomendations for.}
+    \item{\textbf{df:} The preprocessed data.}
+    \item{\textbf{similarity:} The similarity method to be run.}
+    \item{\textbf{n:} Number of reccomendations.}
+\end{itemize}
+
+Now, lets take a word embedding of choice, say TF-IDF.
+
+\begin{lstlisting}
+# Comparing similarity to get the top matches using TF-IDF
+def get_recommendation_tfidf(product_id, df, similarity, n=10):
+    row = df.loc[df['Product Name'] == product_id]
+    index = list(row.index)[0]
+    description = row['desc_lowered'].loc[index]
+    #Create vector using tfidf
+    tfidf_matrix = tfidf_vec.fit_transform(desc_list)
+    if similarity == "cosine":
+        sim_matrix = cosine_similarity(tfidf_matrix)
+        products = find_similarity(sim_matrix , index)
+    elif similarity == "manhattan":
+        sim_matrix = manhattan_distances(tfidf_matrix)
+        products = find_manhattan_distance(sim_matrix , index)
+    else:
+        sim_matrix = euclidean_distances(tfidf_matrix)
+        products = find_euclidean_distances(sim_matrix , index)
+    return products
+\end{lstlisting}
+
+The output it gives us for \texttt{product\_id = 'Vickerman 14" Finial Drop Christmas Ornaments, Pack of 2'} is as follows:
+
+\begin{center}
+\includegraphics[scale=0.35]{01.png}
+\end{center}
 
 \section{Collaborative Filtering}
 \section{C Filtering using Matrix Factorizing, Singular Value Decomposition, and Co-Clustering}
