@@ -2,7 +2,8 @@
 
 % DO CHAPTERS 1 3 4 AND 5
 
-\usepackage[margin=0.75in]{geometry}
+\usepackage[margin=0.60in]{geometry}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{fontspec}
@@ -16,7 +17,7 @@
 
 \hypersetup{
     colorlinks,
-    linkcolor=blue,
+    linkcolor=teal,
 }
 
 \lstset{basicstyle=\ttfamily}
@@ -316,7 +317,8 @@ word2vecModel = models.KeyedVectors.load_word2vec_format(
 
 fasttext_model=ft.load_fasttext_format("cc.en.300.bin.gz")
 
-glove_df = pd.read_csv('glove.6B.300d.txt', sep=" ", quoting=3, header=None, index_col=0)
+glove_df = pd
+    .read_csv('glove.6B.300d.txt', sep=" ", quoting=3, header=None, index_col=0)
 
 glove_model = {key: value.values for key, value in glove_df.T.items()}
 \end{lstlisting}
@@ -387,10 +389,10 @@ def get_recommendation_cv(product_id, df, similarity, n=10):
 The input for this is as follows
 
 \begin{itemize}
-    \item{\textbf{product\_id:} The product name for which we are finding similar reccomendations for.}
+    \item{\textbf{product\_id:} The product name for which we are finding similar recomendations for.}
     \item{\textbf{df:} The preprocessed data.}
     \item{\textbf{similarity:} The similarity method to be run.}
-    \item{\textbf{n:} Number of reccomendations.}
+    \item{\textbf{n:} Number of recomendations.}
 \end{itemize}
 
 Now, lets take a word embedding of choice, say TF-IDF.
@@ -422,6 +424,158 @@ The output it gives us for \texttt{product\_id = 'Vickerman 14" Finial Drop Chri
 \end{center}
 
 \section{Collaborative Filtering}
-\section{C Filtering using Matrix Factorizing, Singular Value Decomposition, and Co-Clustering}
+
+Collaborative Filtering is a recomendation method in which the algorithm uses the customer's history and ratings to find customers similar in that regard, and then recommend them items that they liked. There are two types of collaborative filtering methods — user-to-user and item-to-item. There is also a more popularly used KNN based algorithm.
+
+\subsection{User-to-user Filtering}
+
+Here, it recommends items that a particular user might like by finding similar users, using purchase history or ratings on various items, and then suggesting the items liked by these similar users.
+
+\medskip
+
+A matrix is formed to describe all the users, corresponding to all the items. Using this, we can calculate the similarity metrics, such as cosine similarity to calculate user-user relations.
+
+\subsubsection{Implementation}
+
+We create a matrix consisting of purchase history. It corresponds to all users and all the items available. Then we encode the data, with a 1 indicating the customer has bought the item, and 0 if he hasn't.
+
+\begin{lstlisting}
+purchase_df = (data1.groupby(['CustomerID', 'StockCode'])['Quantity'].
+    sum().unstack().reset_index().fillna(0).set_index('CustomerID'))
+purchase_df.head()
+\end{lstlisting}
+
+We then apply cosine similarity to the matrix, and store the user similarity in a different matrix. Values close to zero in this mean the similarity between customers is minimal, while those closer to 1 mean it is strong. We can then implement a recommendation system through this.
+
+\begin{lstlisting}
+user_similarity = user_similarity_data[user_similarity_data.index == uid]
+
+other_users_similarities = user_similarity_data[user_similarity_data.index != uid]
+
+similarities = cosine_similarity(user_similarity,other_users_similarities)[0].tolist()
+user_indices = other_users_similarities.index.tolist()
+index_similarity_pair = dict(zip(user_indices, similarities))
+
+sorted_index_similarity_pair = sorted(index_similarity_pair.items(), reverse=True)
+top_k_users_similarities = sorted_index_similarity_pair[:k]
+similar_users = [u[0] for u in top_k_users_similarities]
+
+print(f"The users with behaviour similar to that of user {uid} are:", similar_users)
+\end{lstlisting}
+
+\subsection{Item-to-item Filtering}
+
+This filtering method finds similiarity between items the user bought instead of similarity between other users who bought the same items like in user-to-user filtering.
+
+\medskip
+
+After creating a similarity matrix of items, we apply similar cosine similiarity methods to it.
+
+\begin{lstlisting}
+items_purchase_df = (data1.groupby(['StockCode','CustomerID'])['Quantity'].
+    sum().unstack().reset_index().fillna(0).set_index('StockCode'))
+
+items_purchase_df = items_purchase_df.applymap(encode_units)
+item_similarities = cosine_similarity(items_purchase_df)
+item_similarity_data = pd.DataFrame(item_similarities,index=items_purchase_df
+    .index,columns=items_purchase_df.index)
+\end{lstlisting}
+
+We then use similar code to give recommendations.
+
+\begin{lstlisting}
+item_similarity = item_similarity_data[item_similarity_data.index == item_id]
+
+other_items_similarities = item_similarity_data[item_similarity_data.
+index != item_id]
+
+similarities = cosine_similarity(item_similarity, other_items_
+similarities)[0].tolist()
+
+item_indices = other_items_similarities.index.tolist()
+
+index_similarity_pair = dict(zip(item_indices, similarities))
+
+sorted_index_similarity_pair = sorted(index_similarity_pair.items())
+
+top_k_item_similarities = sorted_index_similarity_pair[:k]
+similar_items = [u[0] for u in top_k_item_similarities]
+
+print(similar_items)
+\end{lstlisting}
+
+This first separates the selected item from the other items and then takes a cosine similarity of the selected item with all other items to find the similarities.
+
+For example, we get this as an output for a given input.
+
+\begin{center}
+    \texttt{similar\_items = fetch\_similar\_items('10002')}
+
+    \texttt{['10080', '10120', '10123C', '10124A', '10124G', '10125', '10133', '10135', '11001', '15030']}
+\end{center}
+
+\subsection{KNN}
+
+This approach uses principles of machine learning to make recommendations. The KNN method is a supervised learning model with low calculation times and easy implementation.
+
+\begin{center}
+\includegraphics[scale=0.45]{02.png}
+\end{center}
+
+Since our matrix \texttt{purchase\_df} is sparse, we need to convert it to a CSR matrix first, which divides a sparse matrix into three separate arrays.
+
+\begin{itemize}
+    \item{\textbf{values}}
+    \item{\textbf{extent of rows}}
+    \item{\textbf{index of columns}}
+\end{itemize}
+
+Then we create the KNN model, using the Euclidean distance metric and fit it.
+
+\begin{lstlisting}
+knn_model = NearestNeighbors(metric = 'euclidean', algorithm = 'brute')
+knn_model.fit(purchase_matrix)
+\end{lstlisting}
+
+We can then write the necessary code to get similar users and their subsequent similar items.
+
+\begin{lstlisting}
+similar_users_knn = []
+
+distances, indices = knn_model.kneighbors(
+    purchase_df.iloc[query_index,:].values.reshape(1, -1),
+    n_neighbors = 5)
+
+for i in range(0, len(distances.flatten())):
+    if i == 0:
+        print('Recommendations for {0}:\n'.format(purchase_
+        df.index[query_index]))
+    else:
+        print('{0}: {1}, with distance of {2}:'.format(
+            i,
+            purchase_df.index[indices.flatten()[i]],
+            distances.flatten()[i]))
+        similar_users_knn.append(purchase_df.index[indices.flatten()[i]])
+
+knn_recommnedations = []
+for j in simular_users_knn:
+    item_list = data1[data1["CustomerID"]==j]['StockCode'].to_list()
+    knn_recommnedations.append(item_list)
+
+flat_list = []
+
+for sublist in knn_recommnedations:
+    for item in sublist:
+        flat_list.append(item)
+
+final_recommendations_list = list(dict.fromkeys(flat_list))
+
+ten_recs = random.sample(final_recommendations_list, 10)
+print('Items bought by Similar users based on KNN', ten_recs)
+\end{lstlisting}
+
+\section{Filtering using Matrix Factorizing, Singular Value Decomposition, and Co-Clustering}
+
+In this section we discuss more advanced methods of Collaborative Filtering. These methods are model-based approaches, while cosine similarity falls into the
 
 \end{document}
