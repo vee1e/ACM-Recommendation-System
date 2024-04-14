@@ -484,10 +484,10 @@ item_similarity_data = pd.DataFrame(item_similarities,index=items_purchase_df
 We then use similar code to give recommendations.
 
 \begin{lstlisting}
-item_similarity = item_similarity_data[item_similarity_data.index == item_id]
+item_similarity = item_similarity_data[item_similarity_data.index == iid]
 
 other_items_similarities = item_similarity_data[item_similarity_data.
-index != item_id]
+index != iid]
 
 similarities = cosine_similarity(item_similarity, other_items_
 similarities)[0].tolist()
@@ -576,6 +576,213 @@ print('Items bought by Similar users based on KNN', ten_recs)
 
 \section{Filtering using Matrix Factorizing, Singular Value Decomposition, and Co-Clustering}
 
-In this section we discuss more advanced methods of Collaborative Filtering. These methods are model-based approaches, while cosine similarity falls into the
+In this section we discuss more advanced methods of Collaborative Filtering. These methods are model-based approaches, while cosine similarity falls into the memory-based paradigm. The advantages and disadvantages of both are given below.
+
+\begin{center}
+\includegraphics[scale=0.25]{03.png}
+\end{center}
+
+We now discuss the methods in detail and their implementations.
+
+\subsection{NMF}
+
+NMF stands for non-negative matrix factorization.
+
+\begin{center}
+\includegraphics[scale=0.25]{04.png}
+\end{center}
+
+In it, hidden features (called embeddings) are generated from the user and item matrixes using matrix multiplication. This reduces the dimensionality of the full input matrix leading to space and compute savings. These embeddings are then used to fit an optimization problem (usually minimizing an error equation) to get to the predictions.
+
+\medskip
+
+We train and fit the model as such.
+
+\begin{lstlisting}
+algo1 = NMF()
+algo1.fit(train_set)
+pred1 = algo1.test(test_set)
+\end{lstlisting}
+
+After that, we can measure the performace of it using metrics such as \textbf{RMSE} (root-mean-squared error) and \textbf{MAE} (mean absolute error), where lower is better. We can also cross-validate them for complete confidence.
+
+\begin{lstlisting}
+accuracy.rmse(pred1)
+accuracy.mae(pred1)
+
+RMSE: 428.3167
+MAE:  272.6909
+
+cross_validate(algo1, formated_data, verbose=True)
+\end{lstlisting}
+
+\subsection{Co-Clustering}
+
+It is a data-mining technique that simultaneously clusters the columns and rows of a DataFrame/matrix. It differs from normal clustering, where each object is checked for similarity with other objects based on a single entity/type of comparison. This means you check for co-grouping of two different entities/types of comparison for each object simultaneously.
+
+\begin{lstlisting}
+algo2 = CoClustering()
+algo2.fit(train_set)
+pred2 = algo2.test(test_set)
+
+accuracy.rmse(pred2)
+accuracy.mae(pred2)
+
+RMSE: 6.7877
+MAE:  5.8950
+\end{lstlisting}
+
+Using cross-validation, we can see the RMSE and MAE values are indeed low.
+
+\begin{center}
+    \texttt{cross\_validate(algo2, formated\_data, verbose=True)}
+\end{center}
+
+\begin{center}
+\includegraphics[scale=0.37]{05.png}
+\end{center}
+
+\subsection{Singular Value Decomposition (SVD)}
+
+SVD is a linear algebra concept generally used to reduce matrix dimensions. It is also a type of matrix factorization. An error equation is similarly minimized to get to the prediction.
+
+\begin{lstlisting}
+algo3 = SVD()
+algo3.fit(train_set)
+pred3 = algo3.test(test_set)
+
+accuracy.rmse(pred3)
+accuracy.mae(pred3)
+
+RMSE: 4827.6830
+MAE:  4815.8341
+\end{lstlisting}
+
+This seems to perform the worst of all 3 methods we tested. This is verified with cross-validation. Performing a real-world test on it gives us similar results.
+
+\begin{lstlisting}
+data1[(data1['StockCode']=='47590B')&(data1['CustomerID']==15738)].Quantity.sum()
+algo2.test([['47590B',15738,78]])
+
+[
+    Prediction(uid='47590B', iid=15738, r_ui=78,
+               est=133.01087456331527, details={'was_impossible': False})
+]
+\end{lstlisting}
+
+\subsection{Implementation of Co-Clustering}
+
+We now get the predictions using Co-Clustering.
+
+\begin{lstlisting}
+predict_data = pd.DataFrame(pred2,
+    columns = ['iid', 'cust_id', 'quantity', 'prediction', 'details'])
+
+\end{lstlisting}
+
+Add important information such as the number of item orders and customer orders for each record.
+
+\begin{lstlisting}
+def get_item_orders(user_id):
+    try:
+        # for an item, return the no. of orders made
+        return len(train_set.ur[train_set.to_inner_uid(user_id)])
+    except ValueError:
+        # user not present in training
+        return 0
+
+
+def get_customer_orders(iid):
+    try:
+        # for an customer, return the no. of orders made
+        return len(train_set.ir[train_set.to_inner_iid(iid)])
+    except ValueError:
+        # item not present in training
+        return 0
+
+
+predict_data['item_orders'] = predict_data.iid.apply(get_item_orders)
+predict_data['customer_orders'] = predict_data.cust_id.apply(get_customer_orders)
+\end{lstlisting}
+
+We calculate the error to get the worst and best predictions.
+
+\begin{lstlisting}
+predict_data['error'] = abs(predict_data.prediction - predict_data.quantity)
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=0.45]{06.png}
+\end{center}
+
+\begin{lstlisting}
+best_predictions = predict_data.sort_values(by='error')[:10]
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=0.45]{07.png}
+\end{center}
+
+\begin{lstlisting}
+worst_predictions = predict_data.sort_values(by='error')[-10:]
+\end{lstlisting}
+
+\begin{center}
+\includegraphics[scale=0.45]{08.png}
+\end{center}
+
+Now, lets use the example of customer 12347. We get the customers who bought the same items as them
+
+\begin{lstlisting}
+item_list = predict_data[predict_data['cust_id']==12347]['iid'].values.tolist()
+print(item_list)
+
+['82494L', '84970S', '47599A', '84997B', '85123A', '84997C', '85049A']
+
+customer_list = predict_data[predict_data['iid'].isin(item_list)]['cust_id'].values
+customer_list = np.unique(customer_list).tolist()
+print(customer_list)
+
+[12347,
+ 12362,
+ 12370,
+ 12378,
+ ...,
+ 12415,
+ 12417,
+ 12428]
+\end{lstlisting}
+
+After filtering, we then finally get the top items to recommend to the user.
+
+\begin{lstlisting}
+filtered_data = predictions_data[predictions_data['cust_id'].isin(customer_list)]
+filtered_data = filtered_data[~filtered_data['iid'].isin(item_list)]
+
+recommended_items = filtered_data
+    .sort_values('prediction',ascending = False)
+    .reset_index(drop = True)
+    .head(10)['iid']
+    .values.tolist()
+
+printrecommended_items)
+\end{lstlisting}
+
+We then finally get this as output.
+
+\begin{lstlisting}
+['16156S',
+ '85049E',
+ '47504K',
+ '85099C',
+ '85049G',
+ '85014B',
+ '72351B',
+ '84536A',
+ '48173C',
+ '47590A']
+\end{lstlisting}
+
+The recommended list of items for \textbf{user 12347} is thus achieved.
 
 \end{document}
